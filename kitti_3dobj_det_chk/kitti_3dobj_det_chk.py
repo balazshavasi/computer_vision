@@ -46,9 +46,10 @@ from math import sin, cos
 import argparse
 
 
-basedir = 'C:/data/kitti/data_small/training' # windows
-basedir = '../data.2/object/training' # *nix
-basedir = 'data' # *nix
+#basedir = 'C:/data/kitti/data_small/training' # windows
+basedir = ".\data" # windows
+#basedir = '../data.2/object/training' # *nix
+#basedir = 'data' # *nix
 left_cam_rgb= 'image_2'
 label = 'label_2'
 velodyne = 'velodyne'
@@ -67,6 +68,8 @@ def loadKittiFiles (frame) :
   # load image file 
   fn = basedir+ left_cam_rgb + frame+'.png'
   fn = os.path.join(basedir, left_cam_rgb, frame+'.png')
+  #print("os.path:" + os.path.dirname)
+  print("fn: " + fn)
   left_cam = Image.open(fn).convert ('RGB')
   
   # load velodyne file 
@@ -264,7 +267,7 @@ def labelToBoundingBox(ax, labeld, calibd):
         codes = [Path.LINETO]*verts.shape[0]
         codes[0] = Path.MOVETO
         pth  = Path (verts, codes)
-        p = patches.PathPatch( pth, fill=False, color='purple', linewidth=2)
+        p = patches.PathPatch( pth, fill=False, color=color, linewidth=2)
         ax.add_patch(p)
         
         
