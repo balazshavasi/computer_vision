@@ -632,7 +632,7 @@ def label_hdbscan(pcd, hdbscan):
 
   #https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array
   #a 10 legnagyobb szamossagu reszhalmaz idx-ei
-  idx_s = np.argpartition(cluster_element_numbers, -10)[-10:]
+  idx_s = np.argpartition(cluster_element_numbers, -20)[-20:]
   print('idx_s:', idx_s)
 
   #top 10 sorted
@@ -685,7 +685,7 @@ def show_all(pcd, ground_pts, pcds_list):
   print(pcd_colors.shape)
 
   for i in range(n_points):
-    pcd_colors[i] = [0.,0.5,0.]
+    pcd_colors[i] = [0.,1.,0.]
   
   ground_pcd.colors = o3d.utility.Vector3dVector(pcd_colors)
 
