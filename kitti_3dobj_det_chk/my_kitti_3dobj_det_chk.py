@@ -69,6 +69,8 @@ label = 'label_2'
 velodyne = 'velodyne'
 calib = 'calib'
 
+dev_velodyne_path = source = "C:/Users/Havasi/source/repos/resources/image_02_for_dev/velodyne/"
+
 
 def loadKittiFiles (frame) :
   '''
@@ -89,6 +91,7 @@ def loadKittiFiles (frame) :
   # load velodyne file 
   fn = basedir+ velodyne + frame+'.bin'
   fn = os.path.join(basedir, velodyne, frame+'.bin')
+  fn = dev_velodyne_path + '0000000000.bin'
   velo = np.fromfile(fn, dtype=np.float32).reshape(-1, 4)
   
   # load calibration file
@@ -411,11 +414,11 @@ def outliers(velo):
 
   #radius outlier removal
   pcd_rad, ind_rad = voxel_pcd.remove_radius_outlier(nb_points=16, radius=0.5)
-  display_inlier_outlier(voxel_pcd,ind_rad)
+  #display_inlier_outlier(voxel_pcd,ind_rad)
 
   #statistical outlier removal
   pcd_stat, ind_stat = voxel_pcd.remove_statistical_outlier(nb_neighbors=16,std_ratio=1.5)
-  display_inlier_outlier(voxel_pcd,ind_stat) 
+  #display_inlier_outlier(voxel_pcd,ind_stat) 
 
   #return value shaping
   inlier_cloud_rad = voxel_pcd.select_by_index(ind_rad)
@@ -595,7 +598,7 @@ def hdbscan(velo):
   hdbscan.fit(points)
   t1 = time.time()
   print("end fit")
-  print(t1-t0)
+  print('fit time: ' + str(t1-t0))
 
   y_pred = hdbscan.labels_.astype(int)
   n_cluster = len(set(y_pred))
@@ -738,9 +741,9 @@ def bounding_box(velo):
   pcd_croped = pcd.crop(bounding_box)
 
   # Display the cropped point cloud:
-  o3d.visualization.draw_geometries([pcd_croped])
+  #o3d.visualization.draw_geometries([pcd_croped])
   points = np.asarray(o3d.utility.Vector3dVector(pcd_croped.points))
-  histogram(points,2)
+  #histogram(points,2)
   
   return points
 
@@ -783,8 +786,8 @@ def groud_Detection(velo):
    # add to geometry list to display later:
    geometries.append(sphere)
 
-  # Display:
-  o3d.visualization.draw_geometries(geometries)
+  # Display min-max:
+  #o3d.visualization.draw_geometries(geometries)
 
   # Define a threshold:
   THRESHOLD = 1.
@@ -811,11 +814,16 @@ def groud_Detection(velo):
     # if the current point is aground point:
     if pcd.points[i][2] <= z_min[2] + THRESHOLD:
         pcd_colors[i] = GREEN  # color it green
-        ground_points = np.append(ground_points, pcd.points[i])
-    else: not_ground_points = np.append(not_ground_points, pcd.points[i])
+        #ground_points = np.append(ground_points, pcd.points[i])
+        ground_points.append(pcd.points[i])
+    #else: not_ground_points = np.append(not_ground_points, pcd.points[i])
+    else: not_ground_points.append(pcd.points[i])
 
-  ground_points = np.asarray(ground_points).reshape((int(len(ground_points)/3),3))
-  not_ground_points = np.asarray(not_ground_points).reshape((int(len(not_ground_points)/3),3))
+  #ground_points = np.asarray(ground_points).reshape((int(len(ground_points)/3),3))
+  #not_ground_points = np.asarray(not_ground_points).reshape((int(len(not_ground_points)/3),3))
+
+  ground_points = np.asarray(ground_points).reshape((int(len(ground_points)),3))
+  not_ground_points = np.asarray(not_ground_points).reshape((int(len(not_ground_points)),3))
         
   print('ground points shape', ground_points.shape)
   print('not_ground_point shape', not_ground_points.shape)
