@@ -70,6 +70,7 @@ velodyne = 'velodyne'
 calib = 'calib'
 
 dev_velodyne_path = source = "C:/Users/Havasi/source/repos/resources/image_02_for_dev/velodyne/"
+dev_tosave_path = "./temp_data/"
 
 
 def loadKittiFiles (frame) :
@@ -631,20 +632,25 @@ def label_hdbscan(pcd, hdbscan):
 
   plt.bar(np.arange(len(cluster_element_numbers)), cluster_element_numbers, align='center')
 
-  plt.show()
+  #plt.show()
 
   #https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array
-  #a 10 legnagyobb szamossagu reszhalmaz idx-ei
-  idx_s = np.argpartition(cluster_element_numbers, -20)[-20:]
+  #az n legnagyobb szamossagu reszhalmaz idx-ei
+  ne = 20
+  n = ne if len(cluster_element_numbers) >= ne else len(cluster_element_numbers)
+  print(f'n: {n}')
+  print(type(n))
+  print(f'len(cluster_element_numbers): {len(cluster_element_numbers)}')
+  idx_s = np.argpartition(cluster_element_numbers, int(-1 / 2 * int(n)))[int(1 / 2 * int(n)):]
   print('idx_s:', idx_s)
 
-  #top 10 sorted
+  #top n sorted
   #idx_s = idx_s[np.argsort(cluster_element_numbers[idx_s])]
   #just index sort
   idx_s = np.sort(idx_s)
   print('idx_s_sort',idx_s)
 
-  #top 10 elem szamossaga
+  #top n elem szamossaga
   top_ten = cluster_element_numbers[idx_s]
   print('top10', top_ten)
 
@@ -657,10 +663,10 @@ def label_hdbscan(pcd, hdbscan):
     for j in range(len(y_pred)):
       if(y_pred[j] == search_value):
         acu = np.append(acu,j)
-    print('acu_type',type(acu))
+    #print('acu_type',type(acu))
     print('acu_len',len(acu))
     acu_list = acu.astype('i').tolist()
-    print('acu_list_type',type(acu_list))
+    #print('acu_list_type',type(acu_list))
     pcd_acu = pcd.select_by_index(acu_list)
     print('pcd_acu',pcd_acu)
     pcds_list = np.append(pcds_list,pcd_acu)
@@ -700,15 +706,88 @@ def show_all(pcd, ground_pts, pcds_list):
     bb3d = np.append(bb3d,aabb)
     obb = pcds_list[i].get_oriented_bounding_box()
     obb.color = [1.,1.,0]
-    #bb3d = np.append(bb3d,obb)
+    bb3d = np.append(bb3d,obb)
   
   bb3d = np.append(bb3d, pcd)
   bb3d = np.append(bb3d, ground_pcd)
 
   o3d.visualization.draw_geometries(bb3d)
 
+def pcds_from_hdbscan(pcd, hdbscan, ground_pts):
+  '''
+  '''
+  points = np.asarray(pcd.points)
+  max_label = hdbscan.labels_.max()
+  n_clusters = max_label + 1
+  y_pred = hdbscan.labels_.astype(int)
+  container = []
+  for i in range(n_clusters):
+    m = np.array([])
+    container.append(m)
+  
+  print('container length',len(container))
 
-   
+  if(len(y_pred) == len(points)):
+    print('ourah')
+  else:
+    print(f'shit: len(y_pred): {len(y_pred)}, len(points): {len(points)}')
+
+  print(points[:2])
+  
+  for i, elem in enumerate(points):
+    'y_pred[i] az i-ik pont klaszter indexe'
+    idx = y_pred[i]
+    if(idx == -1): continue
+    container[idx] = np.append(container[idx],points[i])
+
+  ground_points = np.copy(ground_pts)
+  ground_points = np.asarray(ground_points[:,:3])
+  ground_pcd = o3d.geometry.PointCloud()
+  ground_pcd.points = o3d.utility.Vector3dVector(ground_points)
+  ground_pcd.paint_uniform_color([0,0.9,0])
+
+  next_dict = getNextPathDict()
+  
+  for elem in container:
+    points = np.array(elem).reshape(-1,3)
+    pcd = o3d.geometry.PointCloud()
+    pcd.points = o3d.utility.Vector3dVector(points)
+    pcd.paint_uniform_color([0,0.5,0.5])
+    aabb = pcd.get_axis_aligned_bounding_box()
+    aabb.color = [1.,0., 0.]
+    geometries = [pcd, ground_pcd, aabb]
+    o3d.visualization.draw_geometries(geometries)
+    user_input = input("Enter the claster number to save: ")
+    print(f'user input claster was: {user_input}')
+  
+    savePcdToNpy(user_input, next_dict, pcd)
+    
+  return container
+
+def getNextPathDict():
+  dict = {}
+  for e in range(2):
+    i = 1
+    print(f'getnextpathdict: path:  {dev_tosave_path + f"{e}/" + f"{e}_{i}.npy"}')
+    while os.path.exists(dev_tosave_path + f"{e}/"+ f"{e}_{i}.npy"):
+      i += 1
+    dict[e] = i
+    print(f'last elem in dict[{e}] = {dict[e]}')
+
+  return dict
+
+def savePcdToNpy(u_i, dict, pcd):
+  '''
+  save a pcd to a user determined input given class as .npy file
+  '''
+  print(f"user input {u_i}")
+  print(f'dict at u_i: {dict[int(u_i)]}')
+
+  np.save(dev_tosave_path + "/%s/" % u_i + f"{u_i}_{dict[int(u_i)]}.npy" , np.asarray(pcd.points))
+  dict[int(u_i)] = dict[int(u_i)] + 1
+  #return dict
+
+
 
 def pointcloud_density(velo):
   X = np.asarray(velo[:,:3])
@@ -732,8 +811,11 @@ def bounding_box(velo):
   pcd = o3d.geometry.PointCloud()
   pcd.points = o3d.utility.Vector3dVector(points)
 
-  # Create bounding box:
-  bounds = [[-math.inf, math.inf], [-math.inf, math.inf], [-2.5,2.5]]  # set the bounds
+  # Create bounding box: just z axis trimming
+  #bounds = [[-math.inf, math.inf], [-math.inf, math.inf], [-2.5,2.5]]  # set the bounds
+
+  #bounding box just the closest area of the car, around 10m
+  bounds = [[-10, 10], [-10, 10], [-2.5,2.5]]  # set the bounds
   bounding_box_points = list(itertools.product(*bounds))  # create limit points
   bounding_box = o3d.geometry.AxisAlignedBoundingBox.create_from_points(o3d.utility.Vector3dVector(bounding_box_points))  # create bounding box object
 
@@ -754,6 +836,15 @@ def groud_Detection(velo):
 
   origin = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.5)
   geometries = [pcd,origin]
+
+  '''
+  x_max = data[:,0].max()
+  x_min = data[:,0].min()
+  y_max = data[:,1].max()
+  y_min = data[:,1].min()
+  z_max = data[:,2].max()
+  z_min = data[:,2].min()
+  '''
 
   x_max = max(pcd.points, key=lambda x: x[0])
   y_max = max(pcd.points, key=lambda x: x[1])
@@ -960,6 +1051,11 @@ def main (frame='000008'):
   _pcd, _hdbscan = hdbscan(not_ground_pts)
   
   pcds_list = label_hdbscan(_pcd, _hdbscan)
+
+  container = pcds_from_hdbscan(_pcd, _hdbscan, ground_pts)
+  print(type(container[0]))
+
+  print(container[:1])
   
   show_all(_pcd, ground_pts, pcds_list)
 
