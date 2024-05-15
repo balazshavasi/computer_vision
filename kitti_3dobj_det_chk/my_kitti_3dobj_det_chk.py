@@ -637,11 +637,12 @@ def label_hdbscan(pcd, hdbscan):
   #https://stackoverflow.com/questions/6910641/how-do-i-get-indices-of-n-maximum-values-in-a-numpy-array
   #az n legnagyobb szamossagu reszhalmaz idx-ei
   ne = 20
-  n = ne if len(cluster_element_numbers) >= ne else len(cluster_element_numbers)
+  n = ne if len(cluster_element_numbers) >= ne else len(cluster_element_numbers)-1
   print(f'n: {n}')
   print(type(n))
+  rate = 1
   print(f'len(cluster_element_numbers): {len(cluster_element_numbers)}')
-  idx_s = np.argpartition(cluster_element_numbers, int(-1 / 2 * int(n)))[int(1 / 2 * int(n)):]
+  idx_s = np.argpartition(cluster_element_numbers, int( rate * n))[int(-1 * rate * n):]
   print('idx_s:', idx_s)
 
   #top n sorted
@@ -706,7 +707,7 @@ def show_all(pcd, ground_pts, pcds_list):
     bb3d = np.append(bb3d,aabb)
     obb = pcds_list[i].get_oriented_bounding_box()
     obb.color = [1.,1.,0]
-    bb3d = np.append(bb3d,obb)
+    #bb3d = np.append(bb3d,obb)
   
   bb3d = np.append(bb3d, pcd)
   bb3d = np.append(bb3d, ground_pcd)
@@ -744,9 +745,11 @@ def pcds_from_hdbscan(pcd, hdbscan, ground_pts):
   ground_points = np.asarray(ground_points[:,:3])
   ground_pcd = o3d.geometry.PointCloud()
   ground_pcd.points = o3d.utility.Vector3dVector(ground_points)
-  ground_pcd.paint_uniform_color([0,0.9,0])
+  ground_pcd.paint_uniform_color([0,1.,0])
 
   next_dict = getNextPathDict()
+  pcds = []
+  aabbs = []
   
   for elem in container:
     points = np.array(elem).reshape(-1,3)
@@ -759,14 +762,28 @@ def pcds_from_hdbscan(pcd, hdbscan, ground_pts):
     o3d.visualization.draw_geometries(geometries)
     user_input = input("Enter the claster number to save: ")
     print(f'user input claster was: {user_input}')
+    pcd = colorPcdByCluster(pcd,int(user_input))
   
     savePcdToNpy(user_input, next_dict, pcd)
+
+    pcds.append(pcd)
+    aabbs.append(aabb)
+  
+  pcds.append(ground_pcd)
+  pcds = pcds + aabbs
+  #geometries.append(aabbs)
+  #geometries.append(ground_pcd)
+  #geometries = [pcds, ground_pcd]
+  o3d.visualization.draw_geometries(pcds)
     
   return container
 
 def getNextPathDict():
   dict = {}
-  for e in range(2):
+  files = os.listdir(dev_tosave_path)
+  print(f'dev_tosave_path len folders: {len(files)}')
+
+  for e in range(len(files)):
     i = 1
     print(f'getnextpathdict: path:  {dev_tosave_path + f"{e}/" + f"{e}_{i}.npy"}')
     while os.path.exists(dev_tosave_path + f"{e}/"+ f"{e}_{i}.npy"):
@@ -782,10 +799,28 @@ def savePcdToNpy(u_i, dict, pcd):
   '''
   print(f"user input {u_i}")
   print(f'dict at u_i: {dict[int(u_i)]}')
-
+  #todo: frameid_cluster_idx.npy format
   np.save(dev_tosave_path + "/%s/" % u_i + f"{u_i}_{dict[int(u_i)]}.npy" , np.asarray(pcd.points))
   dict[int(u_i)] = dict[int(u_i)] + 1
-  #return dict
+  #return 
+
+def colorPcdByCluster(pcd, cluster):
+  colors = {}
+  colors.update({0: [1., 0., 0.]})
+  colors.update({1: [1., 1., 0.]})
+  colors.update({2: [0., 0., 1.]})
+  colors.update({3: [0, 1., 0.]})
+  colors.update({4: [1., 0., 1.]})
+  colors.update({5: [0., 1., 0.]})
+  colors.update({6: [0. , 0. ,0.]})
+  pcd.paint_uniform_color(colors[cluster])
+  return pcd
+
+  
+def loadPcdFromNpy(cluster):
+  #todo: frameid_cluster_idx.npy format
+  data_path = dev_tosave_path + cluster
+  points = np.load()
 
 
 

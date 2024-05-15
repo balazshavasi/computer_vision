@@ -1,0 +1,26 @@
+0 - don't care
+1 - plants
+2 - wall
+3 - ground
+4 - cars
+5 - vans
+6 - people
+7 - bicycle
+8 - motor
+9 - transit
+10 - truck
+11 - other
+
+should 
+vans transit truck into one : vans
+motor bicycle into one: bicycle
+
+0 - don't care
+1 - plants
+2 - wall
+3 - ground
+4 - cars
+5 - vans
+6 - people
+7 - bicycle
+8 - other
