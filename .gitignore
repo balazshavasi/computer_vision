@@ -1,2 +1,3 @@
 #ignore temp_data folder
 /kitti_3dobj_det_chk/temp_data/
+/kitti_3dobj_det_chk/GT/*

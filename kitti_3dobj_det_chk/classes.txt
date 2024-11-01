@@ -23,4 +23,4 @@ motor bicycle into one: bicycle
 5 - vans
 6 - people
 7 - bicycle
-8 - other
+#8 - other (off)
